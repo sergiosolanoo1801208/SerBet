@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Poisson · Probabilidades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0B;
+    --surface:#131416;
+    --surface-2:#18191C;
+    --ink:#F2F2F0;
+    --ink-soft:#9A9DA3;
+    --ink-faint:#5F6167;
+    --line:#232427;
+    --accent:#33D17A;
+    --home:#33D17A;
+    --away:#5B8FEF;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:32px 16px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{margin-bottom:32px;text-align:center;}
+  .eyebrow{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:26px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-.01em;
+    color:var(--ink);
+  }
+  h1 span{color:var(--accent);}
+  .sub{color:var(--ink-soft);font-size:13.5px;margin-top:6px;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    margin-bottom:16px;
+  }
+
+  .teams-row{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:14px;
+    margin-bottom:6px;
+  }
+  .team-input{
+    width:100%;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:16px;
+    font-weight:600;
+    background:transparent;
+    border:none;
+    border-bottom:2px solid var(--line);
+    padding:6px 2px 8px;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  .team-input::placeholder{color:var(--ink-faint);font-weight:500;}
+  #localName{text-align:left;border-color:var(--home);}
+  #awayName{text-align:right;border-color:var(--away);}
+  .team-input:focus{border-color:var(--ink);}
+  .vs-badge{
+    width:30px;height:30px;border-radius:50%;
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:10px;font-weight:600;color:var(--ink-faint);
+    background:var(--bg);
+  }
+
+  .group-label{
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:22px 0 10px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+  }
+  .group-label .weight{
+    font-size:10px;
+    letter-spacing:.02em;
+    text-transform:none;
+    color:var(--ink-faint);
+    font-weight:500;
+  }
+  .field-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-bottom:10px;
+  }
+  .field-row:last-child{margin-bottom:0;}
+  label.f{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  label.f span{
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  label.f input, label.f select{
+    font-family:'Space Grotesk',sans-serif;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+    font-weight:500;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--surface-2);
+    color:var(--ink);
+    outline:none;
+    width:100%;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  label.f select{cursor:pointer;}
+  label.f input:focus, label.f select:focus{border-color:var(--accent);background:var(--bg);}
+  .field-row label.f:first-child input,
+  .field-row label.f:first-child select{border-left:2.5px solid var(--home);}
+  .field-row label.f:last-child input,
+  .field-row label.f:last-child select{border-left:2.5px solid var(--away);}
+
+  .context-check{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:2px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .context-check input[type=checkbox]{
+    width:16px;height:16px;
+    accent-color:var(--accent);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  .calc-btn{
+    width:100%;
+    padding:15px;
+    margin-top:24px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:.02em;
+    color:#0A0A0B;
+    background:var(--accent);
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background .15s ease, transform .05s ease;
+  }
+  .calc-btn:hover{background:#28B368;}
+  .calc-btn:active{transform:scale(.99);}
+
+  .clear-btn{
+    display:none;
+    width:100%;
+    padding:13px;
+    margin-top:10px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    letter-spacing:.02em;
+    color:var(--ink-soft);
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:8px;
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .clear-btn:hover{border-color:var(--ink-faint);color:var(--ink);}
+
+  #results{display:none;}
+  .res-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    padding:0 2px 10px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:2px;
+  }
+  .lambda-note{
+    font-size:11.5px;
+    color:var(--ink-faint);
+    padding:10px 2px 0;
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .res-row{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    align-items:center;
+    gap:14px;
+    padding:11px 2px;
+    border-bottom:1px solid var(--line);
+  }
+  .res-row:last-child{border-bottom:none;}
+  .res-label{font-size:13.5px;color:var(--ink-soft);}
+  .res-row.is-max .res-label{color:var(--ink);}
+  .res-pct{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:14.5px;
+    font-weight:600;
+    font-variant-numeric:tabular-nums;
+    min-width:42px;
+    text-align:right;
+    color:var(--ink-soft);
+  }
+  .res-row.is-max .res-pct{color:var(--accent);}
+  .res-odds{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:12.5px;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink-faint);
+    min-width:48px;
+    text-align:right;
+  }
+
+  .table-head{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:10px;
+    padding:6px 2px 8px;
+    font-size:10.5px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    border-bottom:1px solid var(--line);
+  }
+  .table-row{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:10px;
+    align-items:center;
+    padding:9px 2px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .table-row:last-child{border-bottom:none;}
+  .tnum{
+    font-family:'Space Grotesk',sans-serif;
+    font-variant-numeric:tabular-nums;
+    text-align:right;
+    min-width:44px;
+    color:var(--ink-soft);
+    font-weight:500;
+  }
+  .tnum.is-max{color:var(--accent);font-weight:700;}
+  .tsub{
+    display:block;
+    font-size:10px;
+    color:var(--ink-faint);
+    font-weight:400;
+    font-family:'Inter',sans-serif;
+  }
+
+  .side-tag{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .side-tag.h{background:var(--home);}
+  .side-tag.a{background:var(--away);}
+
+  footer{
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:11.5px;
+    margin-top:36px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .calc-btn, .clear-btn{transition:none;}
+  }
+  @media (max-width:520px){
+    .field-row{gap:10px;}
+    .card{padding:16px;}
+    h1{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Modelo de Poisson ponderado + contexto</div>
+    <h1>Calculadora <span>Poisson</span></h1>
+    <div class="sub">Forma reciente + tendencia general + liga + contexto del partido</div>
+  </header>
+
+  <div class="card">
+    <div class="teams-row">
+      <input id="localName" class="team-input" type="text" placeholder="Equipo local">
+      <div class="vs-badge">VS</div>
+      <input id="awayName" class="team-input" type="text" placeholder="Equipo visitante">
+    </div>
+
+    <div class="group-label">
+      <span>Últimos 5 en su condición</span>
+      <span class="weight">peso 65%</span>
+    </div>
+    <div class="field-row">
+      <label class="f"><span>Goles a favor</span><input id="h5gf" type="number" step="0.01" min="0" placeholder="0.00"></label>
+      <label class="f"><span>Goles a favor</span><input id="a5gf" type="number" step="0.01" min="0" placeholder="0.00"></label>
+    </div>
+    <div class="field-row">
+      <label class="f"><span>Goles en contra</span><input id="h5ga" type="number" step="0.01" min="0" placeholder="0.00"></label>
+      <label class="f"><span>Goles en contra</span><input id="a5ga" type="number" step="0.01" min="0" placeholder="0.00"></label>
+    </div>
+
+    <div class="group-label">
+      <span>Últimos 10 en general</span>
+      <span class="weight">peso 35%</span>
+    </div>
+    <div class="field-row">
+      <label class="f"><span>Goles a favor</span><input id="h10gf" type="number" step="0.01" min="0" placeholder="0.00"></label>
+      <label class="f"><span>Goles a favor</span><input id="a10gf" type="number" step="0.01" min="0" placeholder="0.00"></label>
+    </div>
+    <div class="field-row">
+      <label class="f"><span>Goles en contra</span><input id="h10ga" type="number" step="0.01" min="0" placeholder="0.00"></label>
+      <label class="f"><span>Goles en contra</span><input id="a10ga" type="number" step="0.01" min="0" placeholder="0.00"></label>
+    </div>
+
+    <div class="group-label">
+      <span>Promedio de la liga</span>
+      <span class="weight">contexto</span>
+    </div>
+    <div class="field-row">
+      <label class="f"><span>Locales anotan</span><input id="ligaLocal" type="number" step="0.01" min="0" placeholder="0.00"></label>
+      <label class="f"><span>Visitantes anotan</span><input id="ligaAway" type="number" step="0.01" min="0" placeholder="0.00"></label>
+    </div>
+
+    <div class="group-label">
+      <span>Contexto del partido</span>
+      <span class="weight">ajuste cualitativo</span>
+    </div>
+    <div class="field-row">
+      <label class="f"><span>Racha reciente</span>
+        <select id="h_racha">
+          <option value="mala">Mala</option>
+          <option value="normal" selected>Normal</option>
+          <option value="buena">Buena</option>
+        </select>
+      </label>
+      <label class="f"><span>Racha reciente</span>
+        <select id="a_racha">
+          <option value="mala">Mala</option>
+          <option value="normal" selected>Normal</option>
+          <option value="buena">Buena</option>
+        </select>
+      </label>
+    </div>
+    <div class="field-row">
+      <label class="f"><span>Bajas clave</span>
+        <select id="h_bajas">
+          <option value="ninguna" selected>Ninguna</option>
+          <option value="algunas">Algunas</option>
+          <option value="varias">Varias</option>
+        </select>
+      </label>
+      <label class="f"><span>Bajas clave</span>
+        <select id="a_bajas">
+          <option value="ninguna" selected>Ninguna</option>
+          <option value="algunas">Algunas</option>
+          <option value="varias">Varias</option>
+        </select>
+      </label>
+    </div>
+    <div class="field-row">
+      <label class="f"><span>Motivación</span>
+        <select id="h_motivacion">
+          <option value="baja">Baja</option>
+          <option value="normal" selected>Normal</option>
+          <option value="alta">Alta</option>
+        </select>
+      </label>
+      <label class="f"><span>Motivación</span>
+        <select id="a_motivacion">
+          <option value="baja">Baja</option>
+          <option value="normal" selected>Normal</option>
+          <option value="alta">Alta</option>
+        </select>
+      </label>
+    </div>
+    <label class="context-check">
+      <input type="checkbox" id="presionAlta">
+      <span>Partido cerrado / alta presión (derbi, final, descenso)</span>
+    </label>
+
+    <button class="calc-btn" onclick="calcular()">Calcular</button>
+    <button class="clear-btn" id="vaciarBtn" onclick="vaciarTodo()">Vaciar todo</button>
+  </div>
+
+  <div id="results">
+
+    <div class="card res-section">
+      <div class="res-title">Resultado</div>
+      <div class="lambda-note" id="lambdaNote"></div>
+      <div id="r-1x2"></div>
+    </div>
+
+    <div class="card res-section">
+      <div class="res-title">Doble oportunidad</div>
+      <div id="r-dc"></div>
+    </div>
+
+    <div class="card res-section">
+      <div class="res-title">Sin empate</div>
+      <div id="r-dnb"></div>
+    </div>
+
+    <div class="card res-section">
+      <div class="res-title">Ambos marcan</div>
+      <div id="r-btts"></div>
+    </div>
+
+    <div class="card res-section">
+      <div class="res-title">Goles totales</div>
+      <div class="table-head">
+        <span>Línea</span><span class="tnum">Over</span><span class="tnum">Under</span>
+      </div>
+      <div id="r-totales"></div>
+    </div>
+
+    <div class="card res-section">
+      <div class="res-title"><span class="side-tag h"></span><span id="tag-local">Goles del local</span></div>
+      <div class="table-head">
+        <span>Línea</span><span class="tnum">Over</span><span class="tnum">Under</span>
+      </div>
+      <div id="r-ind-local"></div>
+    </div>
+
+    <div class="card res-section">
+      <div class="res-title"><span class="side-tag a"></span><span id="tag-away">Goles del visitante</span></div>
+      <div class="table-head">
+        <span>Línea</span><span class="tnum">Over</span><span class="tnum">Under</span>
+      </div>
+      <div id="r-ind-away"></div>
+    </div>
+
+  </div>
+
+  <footer>λ derivado de fuerza ofensiva/defensiva ponderada, contexto de liga y contexto del partido</footer>
+</div>
+
+<script>
+const TEXT_NUMBER_IDS = ['localName','awayName','h5gf','h5ga','a5gf','a5ga','h10gf','h10ga','a10gf','a10ga','ligaLocal','ligaAway'];
+const SELECT_DEFAULTS = {h_racha:'normal', a_racha:'normal', h_bajas:'ninguna', a_bajas:'ninguna', h_motivacion:'normal', a_motivacion:'normal'};
+
+function num(id){
+  const v = parseFloat(document.getElementById(id).value);
+  return isNaN(v) ? 0 : v;
+}
+
+function factorial(n){
+  let r = 1;
+  for(let i=2;i<=n;i++) r*=i;
+  return r;
+}
+
+function poissonPMF(lambda, k){
+  if(lambda <= 0) return k === 0 ? 1 : 0;
+  return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
+}
+
+function cumulative(lambda, k){
+  let s = 0;
+  for(let n=0;n<=k;n++) s += poissonPMF(lambda, n);
+  return s;
+}
+
+function fmtPct(p){
+  return Math.round(Math.max(0, Math.min(1, p)) * 100) + '%';
+}
+
+function fmtOdds(p){
+  if(p <= 0.0001) return '—';
+  return (1/p).toFixed(2);
+}
+
+// Ajustes de contexto: modifican el ataque propio y la solidez defensiva propia
+function attackFactor(racha, bajas, motivacion){
+  const rachaMap = {mala:0.92, normal:1.00, buena:1.08};
+  const bajasMap = {ninguna:1.00, algunas:0.95, varias:0.88};
+  const motivMap = {baja:0.95, normal:1.00, alta:1.06};
+  return rachaMap[racha] * bajasMap[bajas] * motivMap[motivacion];
+}
+
+function concedeFactor(racha, bajas){
+  // >1 significa que el equipo concede más de lo habitual (defensa debilitada)
+  const rachaMap = {mala:1.08, normal:1.00, buena:0.94};
+  const bajasMap = {ninguna:1.00, algunas:1.04, varias:1.10};
+  return rachaMap[racha] * bajasMap[bajas];
+}
+
+function renderGroup(items){
+  let maxIdx = 0;
+  for(let i=1;i<items.length;i++) if(items[i].p > items[maxIdx].p) maxIdx = i;
+  return items.map((it, i) => `
+    <div class="res-row${i===maxIdx ? ' is-max' : ''}">
+      <span class="res-label">${it.label}</span>
+      <span class="res-pct">${fmtPct(it.p)}</span>
+      <span class="res-odds">${fmtOdds(it.p)}</span>
+    </div>`).join('');
+}
+
+function pairRow(line, pOver, pUnder){
+  const overMax = pOver >= pUnder;
+  return `
+    <div class="table-row">
+      <span>${line}</span>
+      <span class="tnum${overMax ? ' is-max' : ''}">${fmtPct(pOver)}<span class="tsub">${fmtOdds(pOver)}</span></span>
+      <span class="tnum${!overMax ? ' is-max' : ''}">${fmtPct(pUnder)}<span class="tsub">${fmtOdds(pUnder)}</span></span>
+    </div>`;
+}
+
+function calcular(){
+  const W5 = 0.65, W10 = 0.35;
+
+  const h5gf = num('h5gf'), h5ga = num('h5ga');
+  const a5gf = num('a5gf'), a5ga = num('a5ga');
+  const h10gf = num('h10gf'), h10ga = num('h10ga');
+  const a10gf = num('a10gf'), a10ga = num('a10ga');
+  const ligaLocal = num('ligaLocal') || 0.01;
+  const ligaAway = num('ligaAway') || 0.01;
+
+  const wGF_home = W5*h5gf + W10*h10gf;
+  const wGA_home = W5*h5ga + W10*h10ga;
+  const wGF_away = W5*a5gf + W10*a10gf;
+  const wGA_away = W5*a5ga + W10*a10ga;
+
+  const attHome = wGF_home / ligaLocal;
+  const defHome = wGA_home / ligaAway;
+  const attAway = wGF_away / ligaAway;
+  const defAway = wGA_away / ligaLocal;
+
+  // Lambdas base (solo matemática)
+  let lambdaHome = ligaLocal * attHome * defAway;
+  let lambdaAway = ligaAway * attAway * defHome;
+
+  // Contexto del partido
+  const hRacha = document.getElementById('h_racha').value;
+  const aRacha = document.getElementById('a_racha').value;
+  const hBajas = document.getElementById('h_bajas').value;
+  const aBajas = document.getElementById('a_bajas').value;
+  const hMotiv = document.getElementById('h_motivacion').value;
+  const aMotiv = document.getElementById('a_motivacion').value;
+  const presionAlta = document.getElementById('presionAlta').checked;
+
+  const attAdjHome = attackFactor(hRacha, hBajas, hMotiv);
+  const attAdjAway = attackFactor(aRacha, aBajas, aMotiv);
+  const concAdjHome = concedeFactor(hRacha, hBajas);
+  const concAdjAway = concedeFactor(aRacha, aBajas);
+
+  lambdaHome *= attAdjHome * concAdjAway;
+  lambdaAway *= attAdjAway * concAdjHome;
+
+  if(presionAlta){
+    lambdaHome *= 0.94;
+    lambdaAway *= 0.94;
+  }
+
+  const maxG = 9;
+  const matrix = [];
+  for(let i=0;i<=maxG;i++){
+    const rowArr = [];
+    for(let j=0;j<=maxG;j++){
+      rowArr.push(poissonPMF(lambdaHome,i) * poissonPMF(lambdaAway,j));
+    }
+    matrix.push(rowArr);
+  }
+
+  let pHome=0, pDraw=0, pAway=0, pBTTS=0;
+  for(let i=0;i<=maxG;i++){
+    for(let j=0;j<=maxG;j++){
+      const p = matrix[i][j];
+      if(i>j) pHome += p;
+      else if(i===j) pDraw += p;
+      else pAway += p;
+      if(i>=1 && j>=1) pBTTS += p;
+    }
+  }
+
+  const p1X = pHome + pDraw;
+  const p12 = pHome + pAway;
+  const pX2 = pDraw + pAway;
+  const pHomeDNB = pHome / (pHome + pAway);
+  const pAwayDNB = pAway / (pHome + pAway);
+  const pBTTSno = 1 - pBTTS;
+
+  const localName = document.getElementById('localName').value.trim() || 'Local';
+  const awayName = document.getElementById('awayName').value.trim() || 'Visitante';
+
+  document.getElementById('lambdaNote').textContent =
+    'λ ' + localName + ': ' + lambdaHome.toFixed(2) + '  ·  λ ' + awayName + ': ' + lambdaAway.toFixed(2);
+
+  document.getElementById('r-1x2').innerHTML = renderGroup([
+    {label: localName, p: pHome},
+    {label: 'Empate', p: pDraw},
+    {label: awayName, p: pAway}
+  ]);
+
+  document.getElementById('r-dc').innerHTML = renderGroup([
+    {label: '1X', p: p1X},
+    {label: '12', p: p12},
+    {label: 'X2', p: pX2}
+  ]);
+
+  document.getElementById('r-dnb').innerHTML = renderGroup([
+    {label: localName + ' sin empate', p: pHomeDNB},
+    {label: awayName + ' sin empate', p: pAwayDNB}
+  ]);
+
+  document.getElementById('r-btts').innerHTML = renderGroup([
+    {label: 'Ambos marcan · Sí', p: pBTTS},
+    {label: 'Ambos marcan · No', p: pBTTSno}
+  ]);
+
+  let totalesHTML = '';
+  for(let x=0; x<=4; x++){
+    let over = 0;
+    for(let i=0;i<=maxG;i++) for(let j=0;j<=maxG;j++) if(i+j > x) over += matrix[i][j];
+    const under = 1 - over;
+    totalesHTML += pairRow(x + '.5', over, under);
+  }
+  document.getElementById('r-totales').innerHTML = totalesHTML;
+
+  document.getElementById('tag-local').textContent = 'Goles de ' + localName;
+  document.getElementById('tag-away').textContent = 'Goles de ' + awayName;
+
+  let indLocalHTML = '', indAwayHTML = '';
+  for(let x=0; x<=4; x++){
+    const overH = 1 - cumulative(lambdaHome, x);
+    const underH = 1 - overH;
+    const overA = 1 - cumulative(lambdaAway, x);
+    const underA = 1 - overA;
+    indLocalHTML += pairRow(x + '.5', overH, underH);
+    indAwayHTML += pairRow(x + '.5', overA, underA);
+  }
+  document.getElementById('r-ind-local').innerHTML = indLocalHTML;
+  document.getElementById('r-ind-away').innerHTML = indAwayHTML;
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('vaciarBtn').style.display = 'block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function vaciarTodo(){
+  TEXT_NUMBER_IDS.forEach(id => { document.getElementById(id).value = ''; });
+  Object.keys(SELECT_DEFAULTS).forEach(id => { document.getElementById(id).value = SELECT_DEFAULTS[id]; });
+  document.getElementById('presionAlta').checked = false;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('vaciarBtn').style.display = 'none';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>

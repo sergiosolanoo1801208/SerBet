@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SerBet · Dashboard de Probabilidades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Unbounded:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1a1b1f;
+    --shadow-dark: rgba(0,0,0,0.62);
+    --shadow-light: rgba(255,255,255,0.035);
+    --text: #edeef2;
+    --text-dim: #888c96;
+    --text-faint: #5c6069;
+
+    --accent: #7c9bff;
+    --accent-soft: rgba(124,155,255,0.14);
+
+    --radius: 20px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0;
+    min-height:100vh;
+    background: var(--bg);
+    font-family:'Comfortaa', sans-serif;
+    color: var(--text);
+    padding: 22px 16px calc(110px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width: 480px; margin: 0 auto;}
+
+  header{ text-align:center; margin-bottom: 22px; }
+  header .logo{
+    display:inline-flex; align-items:center; gap:9px;
+    font-family:'Unbounded', sans-serif;
+    font-weight:800; font-size: 25px; letter-spacing: -0.5px;
+  }
+  header .logo span.dot{
+    width:10px; height:10px; border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 14px var(--accent);
+  }
+  header p{ color: var(--text-dim); font-size:11.5px; margin-top:7px; font-weight:500; letter-spacing:0.4px;}
+
+  .card{
+    background: var(--bg);
+    border-radius: var(--radius);
+    box-shadow: 9px 9px 20px var(--shadow-dark), -9px -9px 20px var(--shadow-light);
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+
+  .team-block h3{
+    font-family:'Unbounded', sans-serif;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.4px;
+    margin: 0 0 14px; font-weight:700; color: var(--text-dim);
+    display:flex; align-items:center; gap:7px;
+  }
+  .team-block h3::before{
+    content:''; width:7px; height:7px; border-radius:50%;
+    background: var(--accent); display:inline-block;
+  }
+  .team-block.visit h3::before{ background: var(--text-faint); }
+  .team-block{ margin-bottom: 16px; }
+  .team-block:last-of-type{ margin-bottom:0; }
+
+  .field{ margin-bottom: 12px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{
+    display:block; font-size:11px; color: var(--text-dim); margin-bottom:6px; font-weight:500;
+  }
+  .field input{
+    width:100%;
+    background: var(--bg);
+    border: none;
+    border-radius: 13px;
+    box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light);
+    padding: 13px 14px;
+    color: var(--text);
+    font-family:'Comfortaa', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    outline:none;
+  }
+  .field input:focus{ box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light), 0 0 0 2px var(--accent-soft); }
+  .field input::placeholder{ color: var(--text-faint); font-weight:500; }
+
+  .shared-field{ margin-top: 18px; padding-top:16px; border-top: 1px solid rgba(255,255,255,0.045); }
+
+  .calc-btn{
+    display:block; width:100%; margin-top: 20px;
+    background: var(--bg);
+    border:none; border-radius: 15px;
+    padding: 16px;
+    font-family:'Unbounded', sans-serif;
+    font-weight:700; font-size:12.5px; letter-spacing:1.2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    box-shadow: 7px 7px 14px var(--shadow-dark), -7px -7px 14px var(--shadow-light);
+    cursor:pointer;
+    transition: box-shadow .12s ease, transform .12s ease;
+  }
+  .calc-btn:active{
+    box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light);
+    transform: scale(0.995);
+  }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; animation: fadein .35s ease; }
+  @keyframes fadein{ from{ opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .empty-state{
+    text-align:center; padding: 30px 16px;
+  }
+  .empty-state .em-icon{
+    width:52px; height:52px; margin:0 auto 14px; border-radius:16px;
+    background: var(--bg);
+    box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light);
+    display:flex; align-items:center; justify-content:center; color: var(--text-faint);
+  }
+  .empty-state .em-icon svg{ width:24px; height:24px; }
+  .empty-state p{ color: var(--text-dim); font-size:13px; margin: 0 0 16px; line-height:1.5; }
+  .empty-state button{
+    background: var(--bg); border:none; border-radius:12px; padding:10px 20px;
+    color: var(--accent); font-family:'Unbounded'; font-size:11px; font-weight:700; letter-spacing:0.6px;
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    cursor:pointer; text-transform:uppercase;
+  }
+
+  .lambda-row{ display:flex; gap:12px; }
+  .lambda-chip{
+    flex:1; text-align:center; padding: 14px 8px; border-radius:16px;
+    background: var(--bg);
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+  }
+  .lambda-chip .lc-label{ font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:6px; }
+  .lambda-chip .lc-value{ font-family:'Unbounded'; font-size:20px; font-weight:800; color: var(--accent); }
+  .lambda-chip .lc-sub{ font-size:9.5px; color:var(--text-faint); margin-top:3px; }
+
+  .section-title{
+    font-family:'Unbounded', sans-serif;
+    font-size: 11.5px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--text-dim); font-weight:700; margin: 0 0 18px;
+    display:flex; align-items:center; gap:8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.045);
+  }
+  .section-title .badge{
+    background: var(--accent-soft); color: var(--accent);
+    border-radius: 8px; padding: 3px 9px; font-size:9.5px; letter-spacing: 0.5px;
+  }
+
+  /* Floating single bars (Ganador / Doble Oportunidad) */
+  .list-row{ margin-bottom: 20px; }
+  .list-row:last-child{ margin-bottom:0; }
+  .list-row .row-top{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px;
+  }
+  .list-row .row-label{ font-size:13.5px; font-weight:700; color: var(--text); }
+  .list-row .row-meta{ font-size:11.5px; color: var(--text-dim); font-weight:600; }
+  .list-row .row-meta b{ font-family:'Unbounded'; font-weight:700; font-size:13px; }
+
+  .bar-shell{ position:relative; height:22px; }
+  .bar-groove{
+    position:absolute; top:50%; left:0; right:0; transform:translateY(-50%);
+    height:5px; border-radius:6px;
+    background: var(--bg);
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+  }
+  .bar-fill-float{
+    position:absolute; top:50%; left:0; transform:translateY(-50%);
+    height:16px; border-radius:999px;
+    display:flex; align-items:center;
+    transition: width .7s cubic-bezier(.2,.8,.2,1);
+    min-width: 30px;
+  }
+
+  /* Floating split pairs */
+  .split-row{ margin-bottom: 20px; }
+  .split-row:last-child{ margin-bottom:0; }
+  .split-row .split-labels{
+    display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:8px; font-weight:700;
+    color: var(--text-dim);
+  }
+  .split-shell{ display:flex; gap:7px; height:26px; }
+  .split-pill{
+    border-radius:999px; display:flex; align-items:center; justify-content:center;
+    font-family:'Unbounded', sans-serif; font-size:10.5px; font-weight:700; color:#12130f;
+    min-width: 34px; transition: flex-grow .7s cubic-bezier(.2,.8,.2,1);
+  }
+  .split-row .odds{
+    display:flex; justify-content:space-between; font-size:10.5px; color: var(--text-faint); margin-top:7px; font-weight:600;
+  }
+
+  /* Bottom floating nav */
+  .bottom-nav{
+    position: fixed; left:50%; bottom: calc(16px + env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    display:flex; gap:4px;
+    background: var(--bg);
+    border-radius: 999px;
+    padding: 7px;
+    box-shadow: 10px 10px 22px var(--shadow-dark), -10px -10px 22px var(--shadow-light);
+    z-index: 50;
+  }
+  .nav-btn{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    border:none; background:transparent; color:var(--text-faint);
+    padding: 9px 18px; border-radius: 999px;
+    font-family:'Unbounded', sans-serif; font-size:9px; font-weight:700; letter-spacing:0.3px;
+    cursor:pointer; transition: all .25s ease; text-transform:uppercase;
+  }
+  .nav-btn svg{ width:17px; height:17px; }
+  .nav-btn.active{
+    color: var(--accent);
+    background: var(--bg);
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    transform: translateY(-2px);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo"><span class="dot"></span>SerBet</div>
+    <p>Dashboard de probabilidades de fútbol</p>
+  </header>
+
+  <!-- TAB: PARTIDO -->
+  <div class="tab-panel active" id="tab-partido">
+    <div class="card">
+      <div class="team-block local">
+        <h3>Local</h3>
+        <div class="field">
+          <label for="xgLocal">xG Local (goles esperados a favor)</label>
+          <input type="number" id="xgLocal" step="0.01" placeholder="Ej: 1.65" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="xgaLocal">xGA Local (goles esperados en contra)</label>
+          <input type="number" id="xgaLocal" step="0.01" placeholder="Ej: 1.10" inputmode="decimal">
+        </div>
+      </div>
+      <div class="team-block visit">
+        <h3>Visitante</h3>
+        <div class="field">
+          <label for="xgVisit">xG Visitante (goles esperados a favor)</label>
+          <input type="number" id="xgVisit" step="0.01" placeholder="Ej: 1.30" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="xgaVisit">xGA Visitante (goles esperados en contra)</label>
+          <input type="number" id="xgaVisit" step="0.01" placeholder="Ej: 1.35" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field shared-field">
+        <label for="avgGoals">Promedio de goles por equipo (liga)</label>
+        <input type="number" id="avgGoals" step="0.01" placeholder="Ej: 1.40" inputmode="decimal">
+      </div>
+      <button class="calc-btn" onclick="calcular()">Calcular probabilidades</button>
+    </div>
+  </div>
+
+  <!-- TAB: MERCADOS -->
+  <div class="tab-panel" id="tab-mercados">
+    <div id="mercadosEmpty" class="card">
+      <div class="empty-state">
+        <div class="em-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="12" width="3" height="8" rx="1"/><rect x="10.5" y="7" width="3" height="13" rx="1"/><rect x="17" y="3" width="3" height="17" rx="1"/></svg></div>
+        <p>Ingresa los datos del partido para ver los mercados.</p>
+        <button onclick="showTab('partido')">Ir a Partido</button>
+      </div>
+    </div>
+    <div id="mercadosContent" style="display:none;">
+      <div class="card">
+        <div class="lambda-row">
+          <div class="lambda-chip">
+            <div class="lc-label">Local</div>
+            <div class="lc-value" id="lambdaLocalTxt">–</div>
+            <div class="lc-sub">goles esperados</div>
+          </div>
+          <div class="lambda-chip">
+            <div class="lc-label">Visitante</div>
+            <div class="lc-value" id="lambdaVisitTxt">–</div>
+            <div class="lc-sub">goles esperados</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Ganador <span class="badge">1X2</span></div>
+        <div id="ganadorList"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Doble Oportunidad</div>
+        <div id="dobleList"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Sin Empate <span class="badge">DNB</span></div>
+        <div class="split-row">
+          <div class="split-labels"><span>Local</span><span>Visitante</span></div>
+          <div class="split-shell" id="dnbShell"></div>
+          <div class="odds"><span id="dnbOddsA"></span><span id="dnbOddsB"></span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Ambos Marcan <span class="badge">BTTS</span></div>
+        <div class="split-row">
+          <div class="split-labels"><span>Sí</span><span>No</span></div>
+          <div class="split-shell" id="bttsShell"></div>
+          <div class="odds"><span id="bttsOddsA"></span><span id="bttsOddsB"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: GOLES -->
+  <div class="tab-panel" id="tab-goles">
+    <div id="golesEmpty" class="card">
+      <div class="empty-state">
+        <div class="em-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+        <p>Ingresa los datos del partido para ver los goles.</p>
+        <button onclick="showTab('partido')">Ir a Partido</button>
+      </div>
+    </div>
+    <div id="golesContent" style="display:none;">
+      <div class="card">
+        <div class="section-title">Goles Totales</div>
+        <div id="totalGoals"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Goles Individuales <span class="badge">Local</span></div>
+        <div id="localGoals"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Goles Individuales <span class="badge">Visitante</span></div>
+        <div id="visitGoals"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="partido" onclick="showTab('partido')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v3M12 15v3M6 12h3M15 12h3"/></svg>
+    Partido
+  </button>
+  <button class="nav-btn" data-tab="mercados" onclick="showTab('mercados')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="12" width="3" height="8" rx="1"/><rect x="10.5" y="7" width="3" height="13" rx="1"/><rect x="17" y="3" width="3" height="17" rx="1"/></svg>
+    Mercados
+  </button>
+  <button class="nav-btn" data-tab="goles" onclick="showTab('goles')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+    Goles
+  </button>
+</nav>
+
+<script>
+const MAX_GOALS = 12;
+let calculated = false;
+
+const SEM = {
+  green:  { hex:'#43d19e', shadow:'rgba(67,209,158,0.5)'  },
+  yellow: { hex:'#f2c14e', shadow:'rgba(242,193,78,0.5)'  },
+  red:    { hex:'#ef6d6a', shadow:'rgba(239,109,106,0.5)' }
+};
+function semTier(p){
+  if(p >= 0.55) return SEM.green;
+  if(p >= 0.35) return SEM.yellow;
+  return SEM.red;
+}
+
+function factorial(n){
+  let r = 1;
+  for(let i=2;i<=n;i++) r*=i;
+  return r;
+}
+function poissonPMF(k, lambda){
+  return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
+}
+function pct(x){ return (x*100).toFixed(1) + '%'; }
+function minOdds(p){
+  if(p <= 0) return '—';
+  return (1/p).toFixed(2);
+}
+
+function showTab(name){
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === name));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function buildListRow(container, label, prob){
+  const tier = semTier(prob);
+  const w = Math.max(prob*100, 3);
+  const row = document.createElement('div');
+  row.className = 'list-row';
+  row.innerHTML = `
+    <div class="row-top">
+      <span class="row-label">${label}</span>
+      <span class="row-meta"><b style="color:${tier.hex}">${pct(prob)}</b> · cuota mín. ${minOdds(prob)}</span>
+    </div>
+    <div class="bar-shell">
+      <div class="bar-groove"></div>
+      <div class="bar-fill-float" style="width:${w}%; background:${tier.hex}; box-shadow:0 6px 14px ${tier.shadow}, 0 2px 4px rgba(0,0,0,.5);"></div>
+    </div>
+  `;
+  container.appendChild(row);
+}
+
+function buildSplitPair(container, labelA, labelB, probA, probB){
+  const tierA = semTier(probA);
+  const tierB = semTier(probB);
+  const row = document.createElement('div');
+  row.className = 'split-row';
+  row.innerHTML = `
+    <div class="split-labels"><span>${labelA}</span><span>${labelB}</span></div>
+    <div class="split-shell">
+      <div class="split-pill" style="flex-grow:${Math.max(probA,0.02)}; flex-basis:0; background:${tierA.hex}; box-shadow:0 6px 14px ${tierA.shadow}, 0 2px 4px rgba(0,0,0,.5);">${(probA*100).toFixed(1)}%</div>
+      <div class="split-pill" style="flex-grow:${Math.max(probB,0.02)}; flex-basis:0; background:${tierB.hex}; box-shadow:0 6px 14px ${tierB.shadow}, 0 2px 4px rgba(0,0,0,.5);">${(probB*100).toFixed(1)}%</div>
+    </div>
+    <div class="odds"><span>cuota mín. ${minOdds(probA)}</span><span>cuota mín. ${minOdds(probB)}</span></div>
+  `;
+  container.appendChild(row);
+}
+
+function calcular(){
+  const xgLocal = parseFloat(document.getElementById('xgLocal').value);
+  const xgaLocal = parseFloat(document.getElementById('xgaLocal').value);
+  const xgVisit = parseFloat(document.getElementById('xgVisit').value);
+  const xgaVisit = parseFloat(document.getElementById('xgaVisit').value);
+  const avgGoals = parseFloat(document.getElementById('avgGoals').value);
+
+  if([xgLocal, xgaLocal, xgVisit, xgaVisit, avgGoals].some(v => isNaN(v)) || avgGoals <= 0){
+    alert('Completa todos los campos con valores numéricos válidos (el promedio de goles debe ser mayor que 0).');
+    return;
+  }
+
+  const lambdaLocal = (xgLocal * xgaVisit) / avgGoals;
+  const lambdaVisit = (xgVisit * xgaLocal) / avgGoals;
+
+  document.getElementById('lambdaLocalTxt').textContent = lambdaLocal.toFixed(2);
+  document.getElementById('lambdaVisitTxt').textContent = lambdaVisit.toFixed(2);
+
+  const pmfLocal = [];
+  const pmfVisit = [];
+  for(let k=0;k<=MAX_GOALS;k++){
+    pmfLocal.push(poissonPMF(k, lambdaLocal));
+    pmfVisit.push(poissonPMF(k, lambdaVisit));
+  }
+
+  let pLocalWin = 0, pDraw = 0, pVisitWin = 0;
+  const totalDist = new Array(2*MAX_GOALS+1).fill(0);
+  for(let i=0;i<=MAX_GOALS;i++){
+    for(let j=0;j<=MAX_GOALS;j++){
+      const p = pmfLocal[i]*pmfVisit[j];
+      if(i>j) pLocalWin += p;
+      else if(i===j) pDraw += p;
+      else pVisitWin += p;
+      totalDist[i+j] += p;
+    }
+  }
+
+  const ganadorList = document.getElementById('ganadorList');
+  ganadorList.innerHTML = '';
+  buildListRow(ganadorList, 'Local', pLocalWin);
+  buildListRow(ganadorList, 'Empate', pDraw);
+  buildListRow(ganadorList, 'Visitante', pVisitWin);
+
+  const dobleList = document.getElementById('dobleList');
+  dobleList.innerHTML = '';
+  buildListRow(dobleList, '1X (Local o Empate)', pLocalWin + pDraw);
+  buildListRow(dobleList, '12 (Local o Visitante)', pLocalWin + pVisitWin);
+  buildListRow(dobleList, 'X2 (Empate o Visitante)', pDraw + pVisitWin);
+
+  const dnbTotal = pLocalWin + pVisitWin;
+  const dnbLocal = dnbTotal > 0 ? pLocalWin / dnbTotal : 0;
+  const dnbVisit = dnbTotal > 0 ? pVisitWin / dnbTotal : 0;
+  document.getElementById('dnbShell').innerHTML = '';
+  buildSplitPairInto(document.getElementById('dnbShell'), dnbLocal, dnbVisit);
+  document.getElementById('dnbOddsA').textContent = 'cuota mín. ' + minOdds(dnbLocal);
+  document.getElementById('dnbOddsB').textContent = 'cuota mín. ' + minOdds(dnbVisit);
+
+  const pLocalNoScore = pmfLocal[0];
+  const pVisitNoScore = pmfVisit[0];
+  const bttsYes = (1 - pLocalNoScore) * (1 - pVisitNoScore);
+  const bttsNo = 1 - bttsYes;
+  document.getElementById('bttsShell').innerHTML = '';
+  buildSplitPairInto(document.getElementById('bttsShell'), bttsYes, bttsNo);
+  document.getElementById('bttsOddsA').textContent = 'cuota mín. ' + minOdds(bttsYes);
+  document.getElementById('bttsOddsB').textContent = 'cuota mín. ' + minOdds(bttsNo);
+
+  const totalGoalsContainer = document.getElementById('totalGoals');
+  totalGoalsContainer.innerHTML = '';
+  const thresholds = [0.5, 1.5, 2.5, 3.5, 4.5];
+  thresholds.forEach(th => {
+    const floorTh = Math.floor(th);
+    let under = 0;
+    for(let g=0; g<=floorTh; g++) under += totalDist[g] || 0;
+    const over = 1 - under;
+    buildSplitPair(totalGoalsContainer, `Más de ${th}`, `Menos de ${th}`, over, under);
+  });
+
+  function renderIndividual(container, pmf){
+    container.innerHTML = '';
+    thresholds.forEach(th => {
+      const floorTh = Math.floor(th);
+      let under = 0;
+      for(let g=0; g<=floorTh; g++) under += pmf[g] || 0;
+      const over = 1 - under;
+      buildSplitPair(container, `Más de ${th}`, `Menos de ${th}`, over, under);
+    });
+  }
+  renderIndividual(document.getElementById('localGoals'), pmfLocal);
+  renderIndividual(document.getElementById('visitGoals'), pmfVisit);
+
+  calculated = true;
+  document.getElementById('mercadosEmpty').style.display = 'none';
+  document.getElementById('mercadosContent').style.display = 'block';
+  document.getElementById('golesEmpty').style.display = 'none';
+  document.getElementById('golesContent').style.display = 'block';
+
+  showTab('mercados');
+}
+
+// Helper used only for DNB/BTTS shells (same pill markup, no wrapping split-row)
+function buildSplitPairInto(shell, probA, probB){
+  const tierA = semTier(probA);
+  const tierB = semTier(probB);
+  shell.innerHTML = `
+    <div class="split-pill" style="flex-grow:${Math.max(probA,0.02)}; flex-basis:0; background:${tierA.hex}; box-shadow:0 6px 14px ${tierA.shadow}, 0 2px 4px rgba(0,0,0,.5);">${(probA*100).toFixed(1)}%</div>
+    <div class="split-pill" style="flex-grow:${Math.max(probB,0.02)}; flex-basis:0; background:${tierB.hex}; box-shadow:0 6px 14px ${tierB.shadow}, 0 2px 4px rgba(0,0,0,.5);">${(probB*100).toFixed(1)}%</div>
+  `;
+}
+</script>
+</body>
+</html>
